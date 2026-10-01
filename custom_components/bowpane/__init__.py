@@ -1,12 +1,14 @@
-"""Read-only, entity-scoped BowPane companion. Legacy domain preserves pairing."""
+"""Read-only, entity-scoped BowPane companion."""
 from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.components.camera import async_request_stream
+from homeassistant.helpers import config_validation as cv
 from .pairing import Pairings, digest
 from .entitlements import validate_report
 import time
 
-DOMAIN = "homeglance"
+DOMAIN = "bowpane"
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass, config):
@@ -16,8 +18,6 @@ async def async_setup(hass, config):
 
 
 async def async_setup_entry(hass, entry):
-    if entry.data.get("hub") and entry.title == "HomeGlance pairing service":
-        hass.config_entries.async_update_entry(entry, title="BowPane pairing service")
     hass.data[DOMAIN]["entries"][entry.entry_id] = entry
     return True
 
@@ -52,8 +52,8 @@ def snapshot(hass, entry):
 
 
 class CompanionView(HomeAssistantView):
-    url = "/api/homeglance/{action}"
-    name = "api:homeglance"
+    url = "/api/bowpane/{action}"
+    name = "api:bowpane"
     # These routes use a separate 256-bit, entity-scoped capability, NOT HA auth.
     requires_auth = False
 
@@ -73,7 +73,7 @@ class CompanionView(HomeAssistantView):
                 return web.json_response(broker.start(), headers=headers)
             except ValueError:
                 return web.json_response({"error": "rate_limited"}, status=429, headers=headers)
-        secret = request.headers.get("X-HomeGlance-Key", "")
+        secret = request.headers.get("X-BowPane-Key", "")
         if not 40 <= len(secret) <= 64:
             return web.json_response({"error": "unauthorized"}, status=401, headers=headers)
         pending = broker.get(secret)

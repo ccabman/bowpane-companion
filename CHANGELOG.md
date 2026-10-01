@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 — domain transition
+
+- Integration folder/domain, API routes, pairing QR destination and credential header now use BowPane naming.
+- Fresh pairing is required for the new integration; existing HomeGlance entries are not automatically migrated.
+- Updated TV builds retain old saved connections until explicitly paired with BowPane.
+- Declare UI-only configuration for Home Assistant validation.
+
 ## 0.1.4 — unreleased beta preparation
 
 - BowPane branding and current setup documentation.

@@ -17,7 +17,11 @@ Do not expose Home Assistant publicly solely for this integration. Self-signed c
 
 Back up Home Assistant first. Add https://github.com/ccabman/bowpane-companion in HACS → Custom repositories, type Integration. Download BowPane Companion and restart Home Assistant when convenient. Fresh packaged installation testing remains a beta release gate; see the checklist below.
 
-Alternatively, copy `custom_components/homeglance` into your Home Assistant configuration's `custom_components` directory and restart. Keep that folder name: it is a compatibility identifier, not the visible brand.
+Alternatively, copy `custom_components/bowpane` into your Home Assistant configuration's `custom_components` directory and restart.
+
+### Upgrading the early HomeGlance prototype
+
+Version 0.2.0 changes the integration domain and folder from `homeglance` to `bowpane`. This requires fresh pairing; old entries do not migrate automatically. Back up first and record your selected cameras, sensors, and display settings. Install BowPane through HACS, restart, and install a TV build supporting the new domain. Start pairing from the TV, add the new BowPane integration in Home Assistant, and approve on the TV. Reapply display settings and confirm playback before removing the old integration entries and old folder. Do not merely rename an installed folder. Updated TV builds keep existing saved legacy connections working until you replace them through pairing.
 
 ## Pair
 
@@ -50,7 +54,7 @@ In compatible TV builds, Camera Grid is view-only. Controls fade when idle; the 
 - Cannot edit: Configure the TV entry, not the pairing service.
 - Pro fields missing: open the TV app and reopen Configure. Reports expire after two minutes and on restart.
 - Camera unavailable: verify that entity streams in Home Assistant. Entity selection alone does not guarantee codec/network compatibility.
-- Old branding: refresh the frontend. Internal `homeglance` API/folder names intentionally preserve existing pairing.
+- Old branding: refresh the frontend. A `homeglance` folder or old entry belongs to the pre-0.2.0 prototype; follow the upgrade steps above.
 
 ## Privacy and security
 

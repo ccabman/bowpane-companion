@@ -11,7 +11,7 @@ def validate_report(body):
     return dict(body)
 
 def reported_pro(hass, entry):
-    report = hass.data["homeglance"].get("capabilities", {}).get(entry.data.get("key_hash"))
+    report = hass.data["bowpane"].get("capabilities", {}).get(entry.data.get("key_hash"))
     return bool(report and time.monotonic() - report["received"] < 120 and report["tier"] == "pro")
 
 def preserve_pro_settings(old, cameras, panel):

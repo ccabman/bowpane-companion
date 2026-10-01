@@ -2,7 +2,7 @@ import importlib.util
 from pathlib import Path
 import unittest
 
-spec = importlib.util.spec_from_file_location("pairing", Path(__file__).parents[1] / "custom_components/homeglance/pairing.py")
+spec = importlib.util.spec_from_file_location("pairing", Path(__file__).parents[1] / "custom_components/bowpane/pairing.py")
 pairing = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(pairing)
 

@@ -6,16 +6,16 @@ from homeassistant.helpers import selector
 from .pairing import validate_selection, validate_panel
 from .entitlements import reported_pro, preserve_pro_settings
 
-DOMAIN = "homeglance"
+DOMAIN = "bowpane"
 
 
-class HomeGlanceFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class BowPaneFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        return HomeGlanceOptionsFlow()
+        return BowPaneOptionsFlow()
 
     async def async_step_user(self, user_input=None):
         # HA's config-flow HTTP endpoints enforce administrator access. They do
@@ -60,7 +60,7 @@ class HomeGlanceFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="install", data_schema=vol.Schema({}))
 
 
-class HomeGlanceOptionsFlow(config_entries.OptionsFlow):
+class BowPaneOptionsFlow(config_entries.OptionsFlow):
     """Edit an existing TV's scope without replacing its pairing credential."""
 
     async def async_step_init(self, user_input=None):

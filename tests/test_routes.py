@@ -15,10 +15,11 @@ def module(name, **values):
 module("aiohttp", web=SimpleNamespace(json_response=lambda data, status=200, headers=None: SimpleNamespace(data=data, status=status)))
 module("homeassistant")
 module("homeassistant.components")
+module("homeassistant.helpers", config_validation=SimpleNamespace(config_entry_only_config_schema=lambda domain: domain))
 module("homeassistant.components.http", HomeAssistantView=object)
 async def stream(hass, camera, fmt): return "/api/hls/test/master.m3u8"
 module("homeassistant.components.camera", async_request_stream=stream)
-path = Path(__file__).parents[1] / "custom_components/homeglance"
+path = Path(__file__).parents[1] / "custom_components/bowpane"
 spec = importlib.util.spec_from_file_location("route_fixture", path / "__init__.py", submodule_search_locations=[str(path)])
 integration = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = integration
@@ -28,7 +29,7 @@ class Request:
     secure = True
     content_length = 32
     def __init__(self, secret="", body=None):
-        self.headers = {"X-HomeGlance-Key": secret}
+        self.headers = {"X-BowPane-Key": secret}
         self.body = body or {}
     async def json(self): return self.body
 
@@ -36,7 +37,7 @@ class RouteTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.broker = integration.Pairings()
         self.entries = {}
-        self.hass = SimpleNamespace(data={"homeglance":{"pairings": self.broker, "entries":self.entries}},
+        self.hass = SimpleNamespace(data={"bowpane":{"pairings": self.broker, "entries":self.entries}},
             states=SimpleNamespace(get=lambda entity: None),
             config_entries=SimpleNamespace(async_update_entry=lambda entry, data: setattr(entry, "data", data)))
         self.view = integration.CompanionView(self.hass)
@@ -113,7 +114,7 @@ class RouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(reported_pro(self.hass, self.entry))
         other = SimpleNamespace(data={"key_hash": "other"})
         self.assertFalse(reported_pro(self.hass, other))
-        report = self.hass.data["homeglance"]["capabilities"][self.entry.data["key_hash"]]
+        report = self.hass.data["bowpane"]["capabilities"][self.entry.data["key_hash"]]
         report["received"] -= 121
         self.assertFalse(reported_pro(self.hass, self.entry))
         cameras, panel = preserve_pro_settings({"cameras": [{"entity": "camera.door", "main": "camera.hq"}], "panel": {"title": "Saved"}},
