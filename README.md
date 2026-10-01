@@ -1,0 +1,67 @@
+# BowPane Companion
+
+Local Home Assistant pairing and configuration for the BowPane Apple TV app.
+
+**Development beta.** The compatible Apple TV app is distributed separately and its source is not included. This is not yet a default HACS listing or a claim of App Store availability.
+
+## Requirements
+
+- Home Assistant 2026.9.0 or later. Development testing covered the 2026.9 series, not all future releases.
+- Administrator access and a trusted HTTPS Home Assistant address reachable from the TV.
+- One to four camera entities capable of HLS streaming; sensors are optional.
+- A compatible BowPane TV build. Raw RTSP and WebRTC URLs are not supported by this companion/app path.
+
+Do not expose Home Assistant publicly solely for this integration. Self-signed certificates are not bypassed; configure trusted proxies correctly if HTTPS terminates upstream.
+
+## Install
+
+Back up Home Assistant first. Add https://github.com/ccabman/bowpane-companion in HACS → Custom repositories, type Integration. Download BowPane Companion and restart Home Assistant when convenient. Fresh packaged installation testing remains a beta release gate; see the checklist below.
+
+Alternatively, copy `custom_components/homeglance` into your Home Assistant configuration's `custom_components` directory and restart. Keep that folder name: it is a compatibility identifier, not the visible brand.
+
+## Pair
+
+1. In Home Assistant, open Settings → Devices & services → Add integration → BowPane. Enable the local pairing service if prompted.
+2. On the TV, open Settings → Pair with Home Assistant, enter your HTTPS address, and start pairing.
+3. Follow the TV's QR link or add another BowPane entry in Home Assistant.
+4. Enter the **four-digit** code, name the TV, and select one to four cameras and up to four Glance sensors. Optional full-screen camera entities should show higher-quality feeds of the same cameras.
+5. Review and approve on the TV within five minutes.
+
+No cloud BowPane account or general Home Assistant access token is needed. The code is a session locator, not an access credential.
+
+## Configure later
+
+Open Settings → Devices & services → BowPane → your TV → Configure. Select the TV entry, not the pairing service. Changes normally reach the active TV within about 30 seconds without pairing again.
+
+- Cameras: up to four grid feeds, with optional higher-quality full-screen feeds where the TV tier supports them.
+- Glance: up to four sensor or binary-sensor entities.
+- Screen margins: expanded view reduces the border; disable it if edges are clipped.
+- Camera Grid clock: on/off, seven positions, and optional black backing, available in Free and Pro.
+- Home Panel preview: title, two or three columns, clock visibility, and up to six distinct read-only sensor tiles. Not an embedded dashboard or unlimited layout editor.
+
+The companion uses short-lived TV-reported tier hints to tailor settings. These are **not verified purchases** or a server-side paywall. Hidden Pro settings are retained when the TV is offline or reports Free. Keep the TV app open and reopen Configure to refresh the form. Production purchases/restoration are not implemented here.
+
+In compatible TV builds, Camera Grid is view-only. Controls fade when idle; the first remote press reveals the menu. Use Glance to select and expand individual cameras.
+
+## Troubleshooting
+
+- No code/access refused: check installation, restart, HTTPS address and proxy settings. Start a fresh session if expired.
+- Code rejected: codes expire after five minutes and are single-use. Five incorrect claims trigger a five-minute lockout.
+- Cannot edit: Configure the TV entry, not the pairing service.
+- Pro fields missing: open the TV app and reopen Configure. Reports expire after two minutes and on restart.
+- Camera unavailable: verify that entity streams in Home Assistant. Entity selection alone does not guarantee codec/network compatibility.
+- Old branding: refresh the frontend. Internal `homeglance` API/folder names intentionally preserve existing pairing.
+
+## Privacy and security
+
+Access is limited to each TV's selected entities. There are no service-call endpoints or uploads to a BowPane server. HTTPS and a separate random 256-bit credential protect requests. Home Assistant stores its hash; the TV stores the credential in Keychain.
+
+Removing or disabling a TV entry revokes new requests. Already-issued HLS links may remain usable until Home Assistant expires them. The optional QR redirect visits My Home Assistant but carries no household address or TV credential; manual pairing avoids that external redirect.
+
+See [SECURITY.md](SECURITY.md). This beta has not had an independent security audit.
+
+## Development and release status
+
+Run `python3 -m unittest discover -s tests -v`. Tests use policy tests and lightweight Home Assistant adapters, not a full runtime certification. GitHub workflows additionally run hassfest and HACS checks.
+
+See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) and [CHANGELOG.md](CHANGELOG.md). This companion is licensed under [MIT](LICENSE); the separate private Apple TV app is excluded.

@@ -1,0 +1,27 @@
+{
+  "title": "BowPane",
+  "config": {
+    "step": {
+      "install": {"title":"Enable local BowPane pairing","description":"Enable the local companion, then start pairing in BowPane on your TV. Add another BowPane integration entry to enter the TV code and choose cameras. No cloud pairing service or Home Assistant access token is required."},
+      "user": {
+        "title": "Pair BowPane",
+        "description": "Start pairing on your TV, then enter its four-digit code. Choose up to four grid cameras and four sensors. Main cameras are optional higher-quality full-screen alternatives. Finish by approving the selection on the TV. Remove this integration entry to revoke new API access; an already issued video stream may remain valid until Home Assistant expires it.",
+        "data": {"name":"TV name","code":"Code shown on TV","camera_1":"Grid camera 1","main_1":"Full-screen camera 1","camera_2":"Grid camera 2","main_2":"Full-screen camera 2","camera_3":"Grid camera 3","main_3":"Full-screen camera 3","camera_4":"Grid camera 4","main_4":"Full-screen camera 4","sensors":"Sensors (up to four)"}
+      }
+    },
+    "error": {"invalid_pairing":"Check the code, its five-minute expiry, and your selected entities. A code can be used only once. After five incorrect attempts, wait five minutes."},
+    "abort": {"admin_required":"A Home Assistant administrator must approve pairing."}
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Edit TV cameras, sensors and display",
+        "data_description": {"edge_to_edge":"Uses more of the TV screen with a small focus margin. Turn off if your television clips the edges. Applies to Glance, Camera Grid and Home Panel; available in Free and Pro."},
+        "description": "{access_status}\nChanges appear within about 30 seconds. No new pairing code is needed. Home Panel is a Pro read-only preview: select up to six distinct sensors in numbered display order, left to right. Clear optional selections to remove them. Tier reports control this form only; the TV enforces access locally.",
+        "data": {"grid_clock":"Show Camera Grid clock","grid_clock_position":"Camera Grid clock position","grid_clock_background":"Black background behind grid clock","edge_to_edge":"Screen margins: use expanded view (reduce overscan border)","name":"TV name","camera_1":"Grid camera 1","main_1":"Full-screen camera 1","camera_2":"Grid camera 2","main_2":"Full-screen camera 2","camera_3":"Grid camera 3","main_3":"Full-screen camera 3","camera_4":"Grid camera 4","main_4":"Full-screen camera 4","sensors":"Glance sensors (up to four)","panel_title":"Home Panel title","panel_columns":"Home Panel columns (2 or 3)","panel_clock":"Show Home Panel clock","panel_1":"Home Panel tile 1","panel_2":"Home Panel tile 2","panel_3":"Home Panel tile 3","panel_4":"Home Panel tile 4","panel_5":"Home Panel tile 5","panel_6":"Home Panel tile 6"}
+      }
+    },
+    "error": {"invalid_selection":"Select existing entities: one to four cameras, up to four Glance sensors, and up to six distinct Home Panel sensors."},
+    "abort": {"select_tv":"Choose Configure on your paired TV entry, not the pairing service entry."}
+  }
+}
