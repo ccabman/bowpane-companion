@@ -45,7 +45,9 @@ Open Settings → Devices & services → BowPane → your TV → Configure. Sele
 
 The companion uses short-lived TV-reported tier hints to tailor settings. These are **not verified purchases** or a server-side paywall. Hidden Pro settings are retained when the TV is offline or reports Free. Keep the TV app open and reopen Configure to refresh the form. Production purchases/restoration are not implemented here.
 
-In compatible TV builds, Camera Grid is view-only. Controls fade when idle; the first remote press reveals the menu. Use Glance to select and expand individual cameras.
+In compatible TV builds, swipe deliberately left/right to move between Glance, Camera Grid, and Home Panel (Pro). Directional clicks still move camera focus in Glance. Press Back/Menu for Settings or direct view selection. Camera Grid is view-only; use Glance to expand a camera. In full screen, left/right cycles cameras and Back returns.
+
+Companion 0.2.1 adds **Opening screen** under the TV entry's Configure form. The choice applies on the next app launch, not immediately while watching. Home Panel requires Pro; the TV falls back to Glance when unavailable. The camera clock settings now control both Camera Grid and full-screen cameras. These features require the updated TV build.
 
 ## Troubleshooting
 

@@ -78,6 +78,14 @@ class RouteTests(unittest.IsolatedAsyncioTestCase):
             self.entry.data["grid"] = {"showClock": False, "clockPosition": position, "clockBackground": False}
             self.assertEqual((await self.view.post(Request(self.secret), "configuration")).data["grid"], self.entry.data["grid"])
 
+    async def test_opening_screen_defaults_and_updates(self):
+        self.approve_in_ha()
+        await self.view.post(Request(self.secret), "confirm")
+        self.assertEqual((await self.view.post(Request(self.secret), "configuration")).data["defaultView"], "glance")
+        for screen in ["glance", "grid", "panel"]:
+            self.entry.data["default_view"] = screen
+            self.assertEqual((await self.view.post(Request(self.secret), "configuration")).data["defaultView"], screen)
+
     async def test_scope_and_revocation(self):
         self.approve_in_ha()
         await self.view.post(Request(self.secret), "confirm")

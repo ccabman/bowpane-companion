@@ -70,6 +70,7 @@ class BowPaneOptionsFlow(config_entries.OptionsFlow):
         pro = reported_pro(self.hass, entry)
         errors = {}
         if user_input is not None:
+            opening = user_input.get("default_view", entry.data.get("default_view", "glance"))
             cameras = [{"entity": user_input[f"camera_{i}"], "main": user_input.get(f"main_{i}", "")}
                        for i in range(1, 5) if user_input.get(f"camera_{i}")]
             sensors = user_input.get("sensors", [])
@@ -80,6 +81,10 @@ class BowPaneOptionsFlow(config_entries.OptionsFlow):
             if not pro:
                 cameras, panel = preserve_pro_settings(entry.data, cameras, panel)
             try:
+                if opening not in ("glance", "grid", "panel"):
+                    raise ValueError("Invalid opening screen")
+                if opening == "panel" and not pro and opening != entry.data.get("default_view"):
+                    raise ValueError("Home Panel requires Pro")
                 validate_selection(cameras, sensors)
                 validate_panel(panel)
                 entities = sensors + (panel["entities"] if pro else []) + [r[k] for r in cameras for k in (("entity", "main") if pro else ("entity",)) if r.get(k)]
@@ -90,12 +95,14 @@ class BowPaneOptionsFlow(config_entries.OptionsFlow):
             else:
                 self.hass.config_entries.async_update_entry(entry, title=user_input["name"],
                     data={**entry.data, "cameras": cameras, "sensors": sensors, "panel": panel,
+                          "default_view": opening,
                           "edge_to_edge": user_input.get("edge_to_edge", entry.data.get("edge_to_edge", False)),
                           "grid": {"showClock": user_input.get("grid_clock", True),
                                    "clockPosition": user_input.get("grid_clock_position", "top_right"),
                                    "clockBackground": user_input.get("grid_clock_background", True)}})
                 return self.async_create_entry(title="", data={})
         suggested = {"name": entry.title, "sensors": entry.data.get("sensors", []),
+                     "default_view": entry.data.get("default_view", "glance"),
                      "edge_to_edge": entry.data.get("edge_to_edge", False)}
         panel = entry.data.get("panel", {})
         grid = entry.data.get("grid", {})
@@ -112,6 +119,10 @@ class BowPaneOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             suggested = user_input
         schema = {vol.Required("name"): str}
+        opening_options = [{"value": "glance", "label": "Glance"}, {"value": "grid", "label": "Camera Grid"}]
+        if pro or entry.data.get("default_view") == "panel":
+            opening_options.append({"value": "panel", "label": "Home Panel · Pro (Glance when unavailable)"})
+        schema[vol.Required("default_view")] = selector.SelectSelector(selector.SelectSelectorConfig(options=opening_options))
         schema[vol.Required("edge_to_edge", default=False)] = bool
         schema[vol.Required("grid_clock", default=True)] = bool
         schema[vol.Required("grid_clock_position", default="top_right")] = selector.SelectSelector(

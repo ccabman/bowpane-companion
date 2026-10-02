@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 — opening screen
+
+- Configure the TV's opening screen from Home Assistant without re-pairing.
+- Preserve saved Pro Home Panel choices when the TV is offline or Free; the app falls back to Glance.
+- Clarify that clock settings apply to Camera Grid and full-screen cameras in the updated TV app.
+- Document swipe navigation and the Back/Menu shortcut. Requires TV build 2 or later.
+
 ## 0.2.0 — domain transition
 
 - Integration folder/domain, API routes, pairing QR destination and credential header now use BowPane naming.
