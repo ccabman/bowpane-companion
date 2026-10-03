@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2 — camera image fit
+
+- Add an optional per-TV crop-to-fill setting for Glance, Camera Grid, and full-screen cameras (TV build 4 or later).
+- Default to showing the complete camera image without stretching; older TV builds ignore the new setting.
+- Existing pairings and camera selections remain unchanged. Fresh-install customer testing is still pending.
+
 ## 0.2.1 — opening screen
 
 - Configure the TV's opening screen from Home Assistant without re-pairing.

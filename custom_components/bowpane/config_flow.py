@@ -96,12 +96,14 @@ class BowPaneOptionsFlow(config_entries.OptionsFlow):
                 self.hass.config_entries.async_update_entry(entry, title=user_input["name"],
                     data={**entry.data, "cameras": cameras, "sensors": sensors, "panel": panel,
                           "default_view": opening,
+                          "crop_to_fill": user_input.get("crop_to_fill", entry.data.get("crop_to_fill", False)),
                           "edge_to_edge": user_input.get("edge_to_edge", entry.data.get("edge_to_edge", False)),
                           "grid": {"showClock": user_input.get("grid_clock", True),
                                    "clockPosition": user_input.get("grid_clock_position", "top_right"),
                                    "clockBackground": user_input.get("grid_clock_background", True)}})
                 return self.async_create_entry(title="", data={})
         suggested = {"name": entry.title, "sensors": entry.data.get("sensors", []),
+                     "crop_to_fill": entry.data.get("crop_to_fill", False),
                      "default_view": entry.data.get("default_view", "glance"),
                      "edge_to_edge": entry.data.get("edge_to_edge", False)}
         panel = entry.data.get("panel", {})
@@ -124,6 +126,7 @@ class BowPaneOptionsFlow(config_entries.OptionsFlow):
             opening_options.append({"value": "panel", "label": "Home Panel · Pro (Glance when unavailable)"})
         schema[vol.Required("default_view")] = selector.SelectSelector(selector.SelectSelectorConfig(options=opening_options))
         schema[vol.Required("edge_to_edge", default=False)] = bool
+        schema[vol.Required("crop_to_fill", default=False)] = bool
         schema[vol.Required("grid_clock", default=True)] = bool
         schema[vol.Required("grid_clock_position", default="top_right")] = selector.SelectSelector(
             selector.SelectSelectorConfig(options=[

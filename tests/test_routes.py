@@ -78,6 +78,14 @@ class RouteTests(unittest.IsolatedAsyncioTestCase):
             self.entry.data["grid"] = {"showClock": False, "clockPosition": position, "clockBackground": False}
             self.assertEqual((await self.view.post(Request(self.secret), "configuration")).data["grid"], self.entry.data["grid"])
 
+    async def test_camera_crop_defaults_and_updates(self):
+        self.approve_in_ha()
+        await self.view.post(Request(self.secret), "confirm")
+        self.assertFalse((await self.view.post(Request(self.secret), "configuration")).data["cropToFill"])
+        for crop in [True, False]:
+            self.entry.data["crop_to_fill"] = crop
+            self.assertEqual((await self.view.post(Request(self.secret), "configuration")).data["cropToFill"], crop)
+
     async def test_opening_screen_defaults_and_updates(self):
         self.approve_in_ha()
         await self.view.post(Request(self.secret), "confirm")

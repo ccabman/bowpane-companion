@@ -40,6 +40,7 @@ Open Settings → Devices & services → BowPane → your TV → Configure. Sele
 - Cameras: up to four grid feeds, with optional higher-quality full-screen feeds where the TV tier supports them.
 - Glance: up to four sensor or binary-sensor entities.
 - Screen margins: expanded view reduces the border; disable it if edges are clipped.
+- Camera images: crop to fill (requires the updated TV build). Off preserves the whole image with borders where necessary; on trims the edges to fill each tile without stretching. Applies to Glance, Camera Grid, and full-screen cameras, in Free and Pro.
 - Camera Grid clock: on/off, seven positions, and optional black backing, available in Free and Pro.
 - Home Panel preview: title, two or three columns, clock visibility, and up to six distinct read-only sensor tiles. Not an embedded dashboard or unlimited layout editor.
 

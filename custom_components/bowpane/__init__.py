@@ -47,6 +47,7 @@ def snapshot(hass, entry):
                       "unit": str(state.attributes.get("unit_of_measurement", "")) if state else ""})
     return {"name": entry.title, "cameras": cameras, "sensors": sensors,
             "defaultView": entry.data.get("default_view", "glance"),
+            "cropToFill": entry.data.get("crop_to_fill", False),
             "edgeToEdge": entry.data.get("edge_to_edge", False),
             "grid": entry.data.get("grid", {"showClock": True, "clockPosition": "top_right", "clockBackground": True}),
             "panel": {"title": panel["title"], "columns": panel["columns"], "showClock": panel["show_clock"], "tiles": tiles}}

@@ -36,12 +36,14 @@
       "init": {
         "title": "Edit TV cameras, sensors and display",
         "data_description": {
+          "crop_to_fill": "Off: fit the whole image without distortion (borders may appear). On: fill each camera tile by cropping the edges. Applies to Glance, Camera Grid and full-screen cameras.",
           "edge_to_edge": "Uses more of the TV screen with a small focus margin. Turn off if your television clips the edges. Applies to Glance, Camera Grid and Home Panel; available in Free and Pro.",
           "default_view": "Used on next app launch. Home Panel requires Pro; otherwise Glance opens. Does not change your current view."
         },
         "description": "{access_status}\nChanges appear within about 30 seconds. No new pairing code is needed. Home Panel is a Pro read-only preview: select up to six distinct sensors in numbered display order, left to right. Clear optional selections to remove them. Tier reports control this form only; the TV enforces access locally.",
         "data": {
           "grid_clock": "Show clock in Camera Grid and full-screen camera",
+          "crop_to_fill": "Camera images: crop to fill",
           "grid_clock_position": "Camera clock position",
           "grid_clock_background": "Black background behind camera clock",
           "edge_to_edge": "Screen margins: use expanded view (reduce overscan border)",
