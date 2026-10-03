@@ -12,6 +12,9 @@
         "data": {
           "name": "TV name",
           "code": "Code shown on TV",
+          "show_weather": "Show weather beneath the Glance clock (Free and Pro)",
+          "weather_entity": "Primary weather entity",
+          "indoor_temperature": "Indoor house temperature sensor (optional)",
           "camera_1": "Grid camera 1",
           "main_1": "Full-screen camera 1",
           "camera_2": "Grid camera 2",
@@ -25,7 +28,7 @@
       }
     },
     "error": {
-      "invalid_pairing": "Check the code, its five-minute expiry, and your selected entities. A code can be used only once. After five incorrect attempts, wait five minutes."
+      "invalid_pairing": "Check the code, its five-minute expiry, and your selected entities. When weather is enabled, select an existing weather entity and an optional temperature sensor. A code can be used only once. After five incorrect attempts, wait five minutes."
     },
     "abort": {
       "admin_required": "A Home Assistant administrator must approve pairing."
@@ -36,6 +39,7 @@
       "init": {
         "title": "Edit TV cameras, sensors and display",
         "data_description": {
+          "show_weather": "Current conditions and outside temperature, plus optional indoor temperature. Does not use any of the four custom sensor slots. Select a primary weather entity when enabled.",
           "crop_to_fill": "Off: fit the whole image without distortion (borders may appear). On: fill each camera tile by cropping the edges. Applies to Glance, Camera Grid and full-screen cameras.",
           "edge_to_edge": "Uses more of the TV screen with a small focus margin. Turn off if your television clips the edges. Applies to Glance, Camera Grid and Home Panel; available in Free and Pro.",
           "default_view": "Used on next app launch. Home Panel requires Pro; otherwise Glance opens. Does not change your current view."
@@ -43,6 +47,9 @@
         "description": "{access_status}\nChanges appear within about 30 seconds. No new pairing code is needed. Home Panel is a Pro read-only preview: select up to six distinct sensors in numbered display order, left to right. Clear optional selections to remove them. Tier reports control this form only; the TV enforces access locally.",
         "data": {
           "grid_clock": "Show clock in Camera Grid and full-screen camera",
+          "show_weather": "Show weather beneath the Glance clock (Free and Pro)",
+          "weather_entity": "Primary weather entity",
+          "indoor_temperature": "Indoor house temperature sensor (optional)",
           "crop_to_fill": "Camera images: crop to fill",
           "grid_clock_position": "Camera clock position",
           "grid_clock_background": "Black background behind camera clock",
@@ -71,7 +78,7 @@
       }
     },
     "error": {
-      "invalid_selection": "Select existing entities: one to four cameras, up to four Glance sensors, and up to six distinct Home Panel sensors."
+      "invalid_selection": "Select existing entities: one to four cameras, up to four Glance sensors, and up to six distinct Home Panel sensors. When weather is enabled, select a weather entity and an optional sensor with temperature device class."
     },
     "abort": {
       "select_tv": "Choose Configure on your paired TV entry, not the pairing service entry."

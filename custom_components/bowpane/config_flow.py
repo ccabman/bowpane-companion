@@ -5,8 +5,33 @@ from homeassistant.core import callback
 from homeassistant.helpers import selector
 from .pairing import validate_selection, validate_panel
 from .entitlements import reported_pro, preserve_pro_settings
+from .weather import validate_weather
 
 DOMAIN = "bowpane"
+
+
+def weather_input(user_input):
+    return {"show": user_input.get("show_weather", False),
+            "entity": user_input.get("weather_entity", ""),
+            "indoor": user_input.get("indoor_temperature", "")}
+
+
+def add_weather_fields(schema):
+    schema[vol.Required("show_weather", default=False)] = bool
+    schema[vol.Optional("weather_entity")] = selector.EntitySelector(selector.EntitySelectorConfig(domain="weather"))
+    schema[vol.Optional("indoor_temperature")] = selector.EntitySelector(
+        selector.EntitySelectorConfig(domain="sensor", device_class="temperature"))
+
+
+def validate_weather_entities(hass, weather):
+    validate_weather(weather)
+    if not weather.get("show"):
+        return
+    for key in ("entity", "indoor"):
+        if weather.get(key) and hass.states.get(weather[key]) is None:
+            raise ValueError("Missing weather or temperature entity")
+    if weather.get("indoor") and hass.states.get(weather["indoor"]).attributes.get("device_class") != "temperature":
+        raise ValueError("Select a temperature sensor")
 
 
 class BowPaneFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -31,6 +56,8 @@ class BowPaneFlow(config_entries.ConfigFlow, domain=DOMAIN):
             sensors = user_input.get("sensors", [])
             try:
                 validate_selection(cameras, sensors)
+                weather = weather_input(user_input)
+                validate_weather_entities(self.hass, weather)
                 entities = sensors + [r[k] for r in cameras for k in ("entity", "main") if r.get(k)]
                 if any(self.hass.states.get(e) is None for e in entities):
                     raise ValueError("Missing entity")
@@ -39,11 +66,12 @@ class BowPaneFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_pairing"
             else:
                 return self.async_create_entry(title=user_input["name"], data={
-                    "key_hash": key_hash, "confirmed": False, "cameras": cameras, "sensors": sensors})
+                    "key_hash": key_hash, "confirmed": False, "cameras": cameras, "sensors": sensors, "weather": weather})
         schema = {
             vol.Required("name", default="Living room TV"): str,
             vol.Required("code"): str,
         }
+        add_weather_fields(schema)
         for i in range(1, 5):
             key = vol.Required(f"camera_{i}") if i == 1 else vol.Optional(f"camera_{i}")
             schema[key] = selector.EntitySelector(selector.EntitySelectorConfig(domain="camera"))
@@ -87,6 +115,8 @@ class BowPaneOptionsFlow(config_entries.OptionsFlow):
                     raise ValueError("Home Panel requires Pro")
                 validate_selection(cameras, sensors)
                 validate_panel(panel)
+                weather = weather_input(user_input)
+                validate_weather_entities(self.hass, weather)
                 entities = sensors + (panel["entities"] if pro else []) + [r[k] for r in cameras for k in (("entity", "main") if pro else ("entity",)) if r.get(k)]
                 if any(self.hass.states.get(e) is None for e in entities):
                     raise ValueError("Missing entity")
@@ -94,7 +124,7 @@ class BowPaneOptionsFlow(config_entries.OptionsFlow):
                 errors["base"] = "invalid_selection"
             else:
                 self.hass.config_entries.async_update_entry(entry, title=user_input["name"],
-                    data={**entry.data, "cameras": cameras, "sensors": sensors, "panel": panel,
+                    data={**entry.data, "cameras": cameras, "sensors": sensors, "panel": panel, "weather": weather,
                           "default_view": opening,
                           "crop_to_fill": user_input.get("crop_to_fill", entry.data.get("crop_to_fill", False)),
                           "edge_to_edge": user_input.get("edge_to_edge", entry.data.get("edge_to_edge", False)),
@@ -107,6 +137,12 @@ class BowPaneOptionsFlow(config_entries.OptionsFlow):
                      "default_view": entry.data.get("default_view", "glance"),
                      "edge_to_edge": entry.data.get("edge_to_edge", False)}
         panel = entry.data.get("panel", {})
+        weather = entry.data.get("weather", {})
+        suggested["show_weather"] = weather.get("show", False)
+        if weather.get("entity"):
+            suggested["weather_entity"] = weather["entity"]
+        if weather.get("indoor"):
+            suggested["indoor_temperature"] = weather["indoor"]
         grid = entry.data.get("grid", {})
         suggested.update(grid_clock=grid.get("showClock", True),
                          grid_clock_position=grid.get("clockPosition", "top_right"),
@@ -121,6 +157,7 @@ class BowPaneOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             suggested = user_input
         schema = {vol.Required("name"): str}
+        add_weather_fields(schema)
         opening_options = [{"value": "glance", "label": "Glance"}, {"value": "grid", "label": "Camera Grid"}]
         if pro or entry.data.get("default_view") == "panel":
             opening_options.append({"value": "panel", "label": "Home Panel · Pro (Glance when unavailable)"})

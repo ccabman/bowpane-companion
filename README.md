@@ -103,6 +103,7 @@ Save/submit the form after editing. Keep BowPane open on the TV while waiting fo
 
 - Cameras: up to four grid feeds, with optional higher-quality full-screen feeds where the TV tier supports them.
 - Glance: up to four sensor or binary-sensor entities.
+- Weather widget (companion **0.2.3+** and TV build **1.0 (6)+**): toggle **Show weather beneath the Glance clock**, select a **Primary weather entity** (`weather.*`), and optionally select an **Indoor house temperature sensor** with device class `temperature`. Current conditions, outside temperature, and optional indoor temperature appear beneath the clock; all four custom sensor slots remain available below. Available in Free and Pro. Uses your existing Home Assistant weather provider, not a new BowPane weather account. Disabled by default; no re-pairing is needed when configuring it later. Missing readings display as unavailable, not as zero. Units are preserved independently from each selected entity.
 - Screen margins: expanded view reduces the border; disable it if edges are clipped.
 - Camera images: crop to fill (requires the updated TV build). Off preserves the whole image with borders where necessary; on trims the edges to fill each tile without stretching. Applies to Glance, Camera Grid, and full-screen cameras, in Free and Pro.
 - Camera Grid clock: on/off, seven positions, and optional black backing, available in Free and Pro.

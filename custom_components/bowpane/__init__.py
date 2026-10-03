@@ -5,6 +5,7 @@ from homeassistant.components.camera import async_request_stream
 from homeassistant.helpers import config_validation as cv
 from .pairing import Pairings, digest
 from .entitlements import validate_report
+from .weather import weather_snapshot
 import time
 
 DOMAIN = "bowpane"
@@ -46,6 +47,7 @@ def snapshot(hass, entry):
                       "value": str(state.state) if state else "unavailable",
                       "unit": str(state.attributes.get("unit_of_measurement", "")) if state else ""})
     return {"name": entry.title, "cameras": cameras, "sensors": sensors,
+            "weather": weather_snapshot(hass, entry.data.get("weather", {"show": False})),
             "defaultView": entry.data.get("default_view", "glance"),
             "cropToFill": entry.data.get("crop_to_fill", False),
             "edgeToEdge": entry.data.get("edge_to_edge", False),

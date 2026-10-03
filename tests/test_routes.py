@@ -60,6 +60,18 @@ class RouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.view.post(request, "configuration")).status, 200)
         self.assertEqual((await self.view.post(request, "confirm")).status, 200)  # retry safe
 
+    async def test_weather_does_not_replace_four_sensor_slots(self):
+        self.approve_in_ha()
+        self.entry.data["sensors"] = [f"sensor.test_{i}" for i in range(4)]
+        self.entry.data["weather"] = {"show": True, "entity": "weather.home", "indoor": "sensor.indoor"}
+        await self.view.post(Request(self.secret), "confirm")
+        result = (await self.view.post(Request(self.secret), "configuration")).data
+        self.assertEqual(len(result["sensors"]), 4)
+        self.assertTrue(result["weather"]["show"])
+        self.entry.data["weather"]["show"] = False
+        result = (await self.view.post(Request(self.secret), "configuration")).data
+        self.assertEqual(result["weather"], {"show": False})
+
     async def test_screen_margin_setting_defaults_and_updates(self):
         self.approve_in_ha()
         await self.view.post(Request(self.secret), "confirm")

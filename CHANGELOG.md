@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.3 — Glance weather widget
+
+- Configure an optional primary weather entity and indoor-temperature sensor during pairing or later through Configure.
+- Show current conditions and temperatures below the Glance clock in TV build 6 or later, in both Free and Pro.
+- Weather and indoor temperature do not consume any of the four custom Glance sensor slots.
+- Disabled by default; existing pairings remain compatible. Only selected weather data is sent, with missing/nonfinite temperatures represented as unavailable.
+- Update the companion through HACS and restart Home Assistant; update the TV app separately through TestFlight. No re-pairing is needed.
+
 ## 0.2.2 — camera image fit
 
 - Add an optional per-TV crop-to-fill setting for Glance, Camera Grid, and full-screen cameras (TV build 4 or later).
