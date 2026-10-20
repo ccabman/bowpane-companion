@@ -8,23 +8,31 @@
       },
       "user": {
         "title": "Pair BowPane",
-        "description": "Start pairing on your device, enter its four-digit code, and select the matching role. A TV requires one to four cameras and allows up to four sensors. A Mac agent needs no cameras and receives read-only module health only; camera, weather and sensor selections are ignored for that role. Finish by confirming on the device. Remove this integration entry to revoke new API access; an already issued video stream may remain valid until Home Assistant expires it.",
+        "description": "Enter the code shown on your device and approve its role. Mac agents receive read-only module health; leave TV display settings closed. For a TV, expand those settings and select one to four cameras. Finish by confirming on the device. Remove this integration entry to revoke new API access. Existing video streams expire through Home Assistant.",
         "data": {
           "name": "Device name",
           "code": "Code shown on the device",
-          "show_weather": "Show weather beneath the Glance clock (Free and Pro)",
-          "weather_entity": "Primary weather entity",
-          "indoor_temperature": "Indoor house temperature sensor (optional)",
-          "camera_1": "Grid camera 1",
-          "main_1": "Full-screen camera 1",
-          "camera_2": "Grid camera 2",
-          "main_2": "Full-screen camera 2",
-          "camera_3": "Grid camera 3",
-          "main_3": "Full-screen camera 3",
-          "camera_4": "Grid camera 4",
-          "main_4": "Full-screen camera 4",
-          "sensors": "Sensors (up to four)",
           "role": "Device role"
+        },
+        "sections": {
+          "tv_settings": {
+            "name": "TV display settings",
+            "description": "For a TV only: select one to four cameras and optional sensors or weather.",
+            "data": {
+              "show_weather": "Show weather beneath the Glance clock (Free and Pro)",
+              "weather_entity": "Primary weather entity",
+              "indoor_temperature": "Indoor house temperature sensor (optional)",
+              "camera_1": "Grid camera 1",
+              "main_1": "Full-screen camera 1",
+              "camera_2": "Grid camera 2",
+              "main_2": "Full-screen camera 2",
+              "camera_3": "Grid camera 3",
+              "main_3": "Full-screen camera 3",
+              "camera_4": "Grid camera 4",
+              "main_4": "Full-screen camera 4",
+              "sensors": "Sensors (up to four)"
+            }
+          }
         }
       }
     },

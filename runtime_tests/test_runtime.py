@@ -191,3 +191,34 @@ async def test_tv_still_requires_camera_selection(hass, hass_client):
     assert result['type'] is FlowResultType.FORM
     assert result['errors'] == {'base':'invalid_pairing'}
     assert (await post(client, 'confirm', started['secret'])).status == 410
+
+async def test_collapsed_tv_section_accepts_nested_scope(hass, hass_client):
+    client = await setup(hass, hass_client)
+    started = await start(hass, client, 'tv_display')
+    flow = await hass.config_entries.flow.async_init('bowpane', context={'source':'user'})
+    data = {'name':'Nested TV', 'code':started['code'], 'role':'tv_display',
+            'tv_settings':{'camera_1':'camera.synthetic', 'sensors':['sensor.synthetic']}}
+    hass.states.async_set('camera.synthetic','idle')
+    hass.states.async_set('sensor.synthetic','21')
+    flow['data_schema'](data)
+    result = await hass.config_entries.flow.async_configure(flow['flow_id'],data)
+    assert result['type'] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    assert result['result'].data['cameras'] == [{'entity':'camera.synthetic','main':''}]
+    assert result['result'].data['sensors'] == ['sensor.synthetic']
+    assert (await post(client,'confirm',started['secret'])).status == 200
+
+async def test_retry_retains_role_and_entered_values(hass, hass_client):
+    client = await setup(hass, hass_client)
+    started = await start(hass, client)
+    flow = await hass.config_entries.flow.async_init('bowpane',context={'source':'user'})
+    wrong = '0000' if started['code'] != '0000' else '0001'
+    data = {'name':'Retry agent','code':wrong,'role':'mac_agent'}
+    result = await hass.config_entries.flow.async_configure(flow['flow_id'],data)
+    assert result['type'] is FlowResultType.FORM
+    suggested = {key.schema: (key.description or {}).get('suggested_value')
+                 for key in result['data_schema'].schema}
+    assert suggested['name'] == data['name']
+    assert suggested['role'] == 'mac_agent'
+    # Compare without exposing pairing codes in assertion failure output.
+    assert suggested['code'] == wrong, 'Entered code was not retained'

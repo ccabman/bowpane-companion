@@ -9,7 +9,8 @@ class Flow:
     def async_create_entry(self, **kwargs): return {'type': 'create_entry', **kwargs}
     def async_abort(self, **kwargs): return {'type': 'abort', **kwargs}
 
-module('voluptuous')
+module('probatio')
+module('homeassistant.data_entry_flow', section=lambda schema, options: schema)
 module('homeassistant.config_entries', ConfigFlow=Flow, OptionsFlow=Flow, SOURCE_USER='user')
 module('homeassistant.core', callback=lambda f: f)
 module('homeassistant.helpers.selector')

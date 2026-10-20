@@ -1,7 +1,8 @@
 """Approve a native device role and its read-only scope in Home Assistant."""
-import voluptuous as vol
+import probatio as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import section
 from homeassistant.helpers import selector
 
 from .entitlements import preserve_pro_settings, reported_pro
@@ -61,13 +62,16 @@ class BowPaneFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     return self.async_create_entry(title=user_input["name"], data={
                         "key_hash": key_hash, "confirmed": False, **policy})
             except ValueError:
-                return self._pairing_form({"base": "invalid_pairing"})
-            cameras = [{"entity": user_input[f"camera_{i}"], "main": user_input.get(f"main_{i}", "")}
-                       for i in range(1, 5) if user_input.get(f"camera_{i}")]
-            sensors = user_input.get("sensors", [])
+                return self._pairing_form({"base": "invalid_pairing"}, user_input)
+            selection = user_input.get("tv_settings", user_input)
+            if not isinstance(selection, dict):
+                return self._pairing_form({"base": "invalid_pairing"}, user_input)
+            cameras = [{"entity": selection[f"camera_{i}"], "main": selection.get(f"main_{i}", "")}
+                       for i in range(1, 5) if selection.get(f"camera_{i}")]
+            sensors = selection.get("sensors", [])
             try:
                 validate_selection(cameras, sensors)
-                weather = weather_input(user_input)
+                weather = weather_input(selection)
                 validate_weather_entities(self.hass, weather)
                 entities = sensors + [r[k] for r in cameras for k in ("entity", "main") if r.get(k)]
                 if any(self.hass.states.get(e) is None for e in entities):
@@ -78,9 +82,9 @@ class BowPaneFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 return self.async_create_entry(title=user_input["name"], data={
                     "key_hash": key_hash, "confirmed": False, "cameras": cameras, "sensors": sensors, "weather": weather, **(policy or {})})
-        return self._pairing_form(errors)
+        return self._pairing_form(errors, user_input)
 
-    def _pairing_form(self, errors):
+    def _pairing_form(self, errors, suggested=None):
         schema = {
             vol.Required("name", default="BowPane device"): str,
             vol.Required("code"): str,
@@ -89,14 +93,23 @@ class BowPaneFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     {"value": "tv_display", "label": "TV display — selected cameras and sensors"},
                     {"value": "mac_agent", "label": "Mac agent — read-only module health"}])),
         }
-        add_weather_fields(schema)
+        tv_schema = {}
+        add_weather_fields(tv_schema)
         for i in range(1, 5):
-            key = vol.Optional(f"camera_{i}")
-            schema[key] = selector.EntitySelector(selector.EntitySelectorConfig(domain="camera"))
-            schema[vol.Optional(f"main_{i}")] = selector.EntitySelector(selector.EntitySelectorConfig(domain="camera"))
-        schema[vol.Optional("sensors", default=[])] = selector.EntitySelector(
+            tv_schema[vol.Optional(f"camera_{i}")] = selector.EntitySelector(selector.EntitySelectorConfig(domain="camera"))
+            tv_schema[vol.Optional(f"main_{i}")] = selector.EntitySelector(selector.EntitySelectorConfig(domain="camera"))
+        tv_schema[vol.Optional("sensors", default=[])] = selector.EntitySelector(
             selector.EntitySelectorConfig(domain=["sensor", "binary_sensor"], multiple=True))
-        return self.async_show_form(step_id="user", data_schema=vol.Schema(schema), errors=errors)
+        schema[vol.Optional("tv_settings")] = section(vol.Schema(tv_schema), {"collapsed": True})
+        # Older clients/admin flows still submit the original flat TV fields.
+        form = vol.Schema(schema, extra=vol.ALLOW_EXTRA)
+        if suggested:
+            # Preserve the role/name/code and nested selections on a retry.
+            safe_suggested = {**suggested}
+            if not isinstance(safe_suggested.get("tv_settings", {}), dict):
+                safe_suggested.pop("tv_settings", None)
+            form = self.add_suggested_values_to_schema(form, safe_suggested)
+        return self.async_show_form(step_id="user", data_schema=form, errors=errors)
 
     async def async_step_install(self, user_input=None):
         if self.context.get("source") != config_entries.SOURCE_USER:
