@@ -55,4 +55,5 @@ Material limits
 - The four-digit claim code remains protected by admin approval, five-minute
   expiry, a five-failure lockout and the independent high-entropy device secret.
 - Health adapters, browser health UI and publisher permissions are future work.
-- Linux CI/full HACS execution and deployment-platform visual review remain gates.
+- Linux CI and all ten HACS checks passed. Setup was visually reviewed in a
+  loopback-only HA frontend using synthetic data; see VISUAL_REVIEW.txt.

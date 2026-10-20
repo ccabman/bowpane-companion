@@ -1,0 +1,48 @@
+BowPane setup visual review — October 20, 2026
+
+Environment
+
+Actual Home Assistant 2026.10.2 frontend 20260930.4 in Chrome, served only on
+127.0.0.1:18125. A dedicated test owner, camera state and temperature sensor were
+synthetic. No default discovery, household configuration or Apple account was
+loaded. Local test authentication was restricted to loopback. Screenshots contain
+no pairing codes, access tokens, household entities, addresses or private media.
+
+Reviewed in the browser
+
+- BowPane appears in the integration picker with its local brand icon.
+- The first setup step enables the pairing service and shows translated guidance.
+- Pairing displays a device name, device code and clear TV/Mac role choices.
+- Mac setup stays compact with the TV settings section closed.
+- A deliberately incorrect code shows translated feedback and preserves the name,
+  selected Mac role and entered code. Correcting it completes camera-free approval.
+- The Mac Configure action shows its fixed read-only health scope; no camera,
+  photo-write or control options are offered.
+- Expanding TV display settings shows translated camera/sensor/weather fields.
+  The camera picker lists and selects only the synthetic test-pattern camera.
+- The unused TV visual flow was cancelled. Nested TV approval and old flat TV
+  payloads both pass actual HA runtime tests on the minimum and current versions.
+
+Issues fixed
+
+1. Mac setup initially required scrolling past every TV camera and weather field.
+   Those fields now live in a collapsed, clearly named TV display settings section.
+   The legacy flat approval payload remains accepted.
+2. Validation errors reset role/name/code. HA's current schema markers and suggested
+   values now preserve those fields and nested TV selections on retry.
+
+The initial frontend loading problem was missing voice-related dependencies in
+the minimal local test environment. Installing the official required packages
+resolved get_services and frontend startup; no BowPane authorization was relaxed.
+
+Evidence saved with the chat deliverables
+
+setup-enable-pairing.png — initial pairing-service step.
+setup-mac-compact.png — revised Mac form; no code entered.
+setup-mac-success.png — camera-free Mac configuration created.
+setup-mac-scope.png — Mac Configure action retains its health-only scope.
+setup-tv-camera.png — TV camera picker selection using a synthetic entity.
+
+Not claimed: physical TV installation identity, Photos access, live module sync,
+new publisher permissions, or household deployment readiness without a reviewed
+backup/install/rollback procedure and explicit deployment authorization.

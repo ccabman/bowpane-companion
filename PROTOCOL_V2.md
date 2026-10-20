@@ -16,7 +16,10 @@ client-supplied capabilities fail closed. Five-minute claims, five-attempt
 lockout, start throttling and single use are shared with v1.
 
 The HA administrator enters the code and explicitly selects the matching role.
-Wrong code/role errors can be corrected in the same form. A TV still requires
+Wrong code/role errors can be corrected in the same form; name, code, role and
+nested selections are retained. TV-only fields are in a collapsed TV display
+settings section, while the original flat TV approval payload remains accepted.
+A TV still requires
 one to four cameras. A Mac needs no cameras; TV selections are ignored for it.
 The client must then confirm. V2 status/confirmation responses wrap the approved
 protocolVersion, role, capabilities and configuration (null for Mac). V1 wire
@@ -55,7 +58,9 @@ controls or arbitrary HA service endpoint is implemented.
 ## Tests and acceptance
 
 See SECURITY_REVIEW.txt for findings and VALIDATION.txt for concrete evidence.
-The runtime suites pass on HA 2026.9.0 and 2026.10.2.
+The runtime suites pass on HA 2026.9.0 and 2026.10.2. Linux CI, all ten
+HACS checks without ignores, and the visual setup review have passed.
+See VALIDATION.txt and VISUAL_REVIEW.txt for evidence.
 The default runtime suite uses real HA with synthetic entries and loopback HTTP;
 HA's trusted-proxy middleware supplies HTTPS for those route tests. A separate
 two-process test uses real TLS and HA's configuration storage. The opt-in native
@@ -79,12 +84,8 @@ The TV source/tests are unchanged, and no app credential is saved to Keychain.
 
 ## Remaining deployment gates
 
-- Run Linux GitHub CI, including the full HACS action, against the reviewed ref.
 - Confirm the native release repository/build identity; simulator source parity
   does not identify the exact binary installed on the household TV.
-- Review the actual HA frontend visually on a supported deployment platform.
-  The real serialized flow schemas/selectors and translations are validated;
-  a browser screenshot review has not been performed.
 - Review and approve a targeted companion backup, install and rollback procedure
   before household deployment. Do not restore whole-house YAML as a rollback.
 - Keep live health collectors, Mac packaging and photo transport migration as

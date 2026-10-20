@@ -1,5 +1,10 @@
 # BowPane Companion
 
+Development branch: protocol v2 pairing and read-only module health are documented
+in [PROTOCOL_V2.md](PROTOCOL_V2.md), with [validation evidence](VALIDATION.txt) and
+a [visual setup review](VISUAL_REVIEW.txt). This prototype has not been released
+or deployed to the household.
+
 Local Home Assistant pairing and configuration for the BowPane Apple TV app.
 
 **Development beta.** The compatible Apple TV app is distributed separately and its source is not included. This is not yet a default HACS listing or a claim of App Store availability.
