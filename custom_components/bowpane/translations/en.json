@@ -4,14 +4,14 @@
     "step": {
       "install": {
         "title": "Enable local BowPane pairing",
-        "description": "Enable the local companion, then start pairing in BowPane on your TV. Add another BowPane integration entry to enter the TV code and choose cameras. No cloud pairing service or Home Assistant access token is required."
+        "description": "Enable the local companion, then start pairing on your TV or test Mac agent. Add another BowPane integration entry to enter the code and approve its role. No cloud pairing service or Home Assistant access token is required."
       },
       "user": {
         "title": "Pair BowPane",
-        "description": "Start pairing on your TV, then enter its four-digit code. Choose up to four grid cameras and four sensors. Main cameras are optional higher-quality full-screen alternatives. Finish by approving the selection on the TV. Remove this integration entry to revoke new API access; an already issued video stream may remain valid until Home Assistant expires it.",
+        "description": "Start pairing on your device, enter its four-digit code, and select the matching role. A TV requires one to four cameras and allows up to four sensors. A Mac agent needs no cameras and receives read-only module health only; camera, weather and sensor selections are ignored for that role. Finish by confirming on the device. Remove this integration entry to revoke new API access; an already issued video stream may remain valid until Home Assistant expires it.",
         "data": {
-          "name": "TV name",
-          "code": "Code shown on TV",
+          "name": "Device name",
+          "code": "Code shown on the device",
           "show_weather": "Show weather beneath the Glance clock (Free and Pro)",
           "weather_entity": "Primary weather entity",
           "indoor_temperature": "Indoor house temperature sensor (optional)",
@@ -23,12 +23,13 @@
           "main_3": "Full-screen camera 3",
           "camera_4": "Grid camera 4",
           "main_4": "Full-screen camera 4",
-          "sensors": "Sensors (up to four)"
+          "sensors": "Sensors (up to four)",
+          "role": "Device role"
         }
       }
     },
     "error": {
-      "invalid_pairing": "Check the code, its five-minute expiry, and your selected entities. When weather is enabled, select an existing weather entity and an optional temperature sensor. A code can be used only once. After five incorrect attempts, wait five minutes."
+      "invalid_pairing": "Check the code, its five-minute expiry, the device role, and your selected entities. TV pairing requires one to four cameras; Mac agents need none. When weather is enabled for a TV, select an existing weather entity and an optional temperature sensor. A code can be used only once. After five incorrect attempts, wait five minutes."
     },
     "abort": {
       "admin_required": "A Home Assistant administrator must approve pairing."
@@ -81,7 +82,8 @@
       "invalid_selection": "Select existing entities: one to four cameras, up to four Glance sensors, and up to six distinct Home Panel sensors. When weather is enabled, select a weather entity and an optional sensor with temperature device class."
     },
     "abort": {
-      "select_tv": "Choose Configure on your paired TV entry, not the pairing service entry."
+      "select_tv": "Choose Configure on your paired TV entry, not the pairing service entry.",
+      "agent_scope_fixed": "This prototype agent has a fixed read-only health scope. Remove its integration entry to revoke access."
     }
   }
 }

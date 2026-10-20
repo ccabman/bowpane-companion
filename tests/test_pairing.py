@@ -67,4 +67,21 @@ class PairingTests(unittest.TestCase):
                        {"show_clock": "true"}, {"title": " "}]:
             with self.assertRaises(ValueError): pairing.validate_panel({**valid, **change})
 
+
+class PairingPolicyLookupTests(unittest.TestCase):
+    def test_lookup_enforces_claim_lockout_and_handles_unicode(self):
+        broker = pairing.Pairings()
+        started = broker.start()
+        for code in ['１２３４', '☃', [], None, 'wrong']:
+            with self.assertRaises(ValueError): broker.policy_for_code(code)
+        with self.assertRaises(ValueError): broker.policy_for_code(started['code'])
+        with self.assertRaises(ValueError): broker.claim(started['code'], 'flow')
+
+    def test_policy_lookup_cannot_mutate_grants(self):
+        broker = pairing.Pairings()
+        started = broker.start({'protocol_version':2, 'role':'mac_agent','capabilities':['health.read']})
+        policy = broker.policy_for_code(started['code'])
+        policy['capabilities'].append('photo.write')
+        self.assertEqual(broker.policy_for_code(started['code'])['capabilities'], ['health.read'])
+
 if __name__ == "__main__": unittest.main()

@@ -1,15 +1,36 @@
 """Read-only, entity-scoped BowPane companion."""
-from aiohttp import web
-from homeassistant.components.http import HomeAssistantView
-from homeassistant.components.camera import async_request_stream
-from homeassistant.helpers import config_validation as cv
-from .pairing import Pairings, digest
-from .entitlements import validate_report
-from .weather import weather_snapshot
+import asyncio
+import json
 import time
+
+from aiohttp import web
+from homeassistant.components.camera import async_request_stream
+from homeassistant.components.http import HomeAssistantView
+from homeassistant.helpers import config_validation as cv
+
+from .entitlements import validate_report
+from .health import health
+from .pairing import Pairings, digest
+from .protocol import describe, grants, negotiate
+from .weather import weather_snapshot
 
 DOMAIN = "bowpane"
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+async def bounded_json(request, limit):
+    """Bound decompressed input too; Content-Length alone is not a byte limit."""
+    if request.headers.get("Content-Encoding", "identity").lower() != "identity":
+        raise ValueError("Compressed requests are not supported")
+    if request.content_length is None or not 0 < request.content_length <= limit:
+        raise ValueError("Invalid body length")
+    chunks = bytearray()
+    async with asyncio.timeout(5):
+        while chunk := await request.content.read(limit + 1 - len(chunks)):
+            chunks.extend(chunk)
+            if len(chunks) > limit:
+                raise ValueError("Body too large")
+    return json.loads(chunks)
 
 
 async def async_setup(hass, config):
@@ -64,14 +85,31 @@ class CompanionView(HomeAssistantView):
     def __init__(self, hass):
         self.hass = hass
 
+    def configuration(self, entry):
+        if entry.data.get("protocol_version") == 2:
+            return {**describe(entry.data), "configuration": snapshot(self.hass, entry) if grants(entry.data, "configuration.read") else None}
+        return snapshot(self.hass, entry)
+
     async def post(self, request, action):
         # Native app only; no browser CORS or URL credentials. Reverse proxy must
         # preserve HTTPS scheme through HA's trusted-proxy configuration.
-        if not request.secure or request.headers.get("Origin"):
-            return web.json_response({"error": "https_required"}, status=403)
+        headers = {"Cache-Control": "no-store"}
+        if not request.secure or "Origin" in request.headers:
+            return web.json_response({"error": "https_required"}, status=403, headers=headers)
         runtime = self.hass.data[DOMAIN]
         broker = runtime["pairings"]
-        headers = {"Cache-Control": "no-store"}
+        if action == "v2_start":
+            if request.content_length is None or request.content_length > 512:
+                return web.json_response({"error": "invalid_request"}, status=400, headers=headers)
+            try:
+                policy = negotiate(await bounded_json(request, 512))
+            except (ValueError, TypeError, UnicodeError, TimeoutError):
+                return web.json_response({"error": "unsupported_protocol_or_role"}, status=400, headers=headers)
+            try:
+                return web.json_response({**broker.start(policy), "protocolVersion": 2,
+                    "role": policy["role"], "capabilities": policy["capabilities"]}, headers=headers)
+            except ValueError:
+                return web.json_response({"error": "rate_limited"}, status=429, headers=headers)
         if action == "start":
             try:
                 return web.json_response(broker.start(), headers=headers)
@@ -90,41 +128,48 @@ class CompanionView(HomeAssistantView):
             if pending is None:
                 return web.json_response({"error": "expired"}, status=410, headers=headers)
             return web.json_response({"status": "approved" if entry else "waiting",
-                                      "configuration": snapshot(self.hass, entry) if entry else None}, headers=headers)
+                                      "configuration": self.configuration(entry) if entry else None}, headers=headers)
         if action == "confirm":
             if entry is not None and entry.data.get("confirmed"):
-                return web.json_response(snapshot(self.hass, entry), headers=headers)
+                return web.json_response(self.configuration(entry), headers=headers)
             if pending is None or entry is None:
                 return web.json_response({"error": "expired"}, status=410, headers=headers)
             self.hass.config_entries.async_update_entry(entry, data={**entry.data, "confirmed": True})
             broker.cancel(secret)
-            return web.json_response(snapshot(self.hass, entry), headers=headers)
+            return web.json_response(self.configuration(entry), headers=headers)
         if entry is None or not entry.data.get("confirmed"):
             return web.json_response({"error": "unauthorized"}, status=401, headers=headers)
+        if action == "v2_health":
+            if not grants(entry.data, "health.read"):
+                return web.json_response({"error": "forbidden"}, status=403, headers=headers)
+            return web.json_response(await health(), headers=headers)
+        required = {"configuration": "configuration.read", "stream": "camera.stream", "capabilities": "configuration.read"}.get(action)
+        if required and not grants(entry.data, required):
+            return web.json_response({"error": "forbidden"}, status=403, headers=headers)
         if action == "capabilities":
             if request.content_length is None or request.content_length > 512:
                 return web.json_response({"error": "invalid_request"}, status=400, headers=headers)
             try:
-                report = validate_report(await request.json())
-            except (ValueError, TypeError):
+                report = validate_report(await bounded_json(request, 512))
+            except (ValueError, TypeError, UnicodeError, TimeoutError):
                 return web.json_response({"error": "invalid_report"}, status=400, headers=headers)
             # Ephemeral per-device UI hints; no purchase proof, no disk writes per heartbeat.
             runtime.setdefault("capabilities", {})[entry.data["key_hash"]] = {**report, "received": time.monotonic()}
             return web.json_response({"ok": True}, headers=headers)
         if action == "configuration":
-            return web.json_response(snapshot(self.hass, entry), headers=headers)
+            return web.json_response(self.configuration(entry), headers=headers)
         if action == "stream":
             if request.content_length is None or request.content_length > 1024:
                 return web.json_response({"error": "invalid_request"}, status=400, headers=headers)
             try:
-                body = await request.json()
+                body = await bounded_json(request, 1024)
                 entity = body.get("entity")
                 allowed = {r[k] for r in entry.data["cameras"] for k in ("entity", "main") if r.get(k)}
                 if not isinstance(entity, str) or entity not in allowed:
                     return web.json_response({"error": "forbidden"}, status=403, headers=headers)
                 url = await async_request_stream(self.hass, entity, fmt="hls")
                 return web.json_response({"url": url}, headers=headers)
-            except Exception:
+            except Exception:  # noqa: BLE001 — camera errors can contain private URLs.
                 # Never log stream URLs, credentials, or camera exceptions.
                 return web.json_response({"error": "stream_unavailable"}, status=503, headers=headers)
         return web.json_response({"error": "not_found"}, status=404, headers=headers)

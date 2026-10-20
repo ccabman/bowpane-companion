@@ -46,7 +46,7 @@ class Pairings:
     def prune(self):
         self.pending = {k: v for k, v in self.pending.items() if v["expires"] > self.clock()}
 
-    def start(self):
+    def start(self, policy=None):
         self.prune()
         if len(self.pending) >= 8 or self.clock() - self.last_start < 5:
             raise ValueError("Try again shortly")
@@ -55,24 +55,36 @@ class Pairings:
         code = str(secrets.randbelow(10**4)).zfill(4)
         while any(v["code"] == code for v in self.pending.values()):
             code = str(secrets.randbelow(10**4)).zfill(4)
-        self.pending[digest(secret)] = {"code": code, "expires": self.clock() + 300, "entry": None}
+        self.pending[digest(secret)] = {"code": code, "expires": self.clock() + 300, "entry": None, "policy": policy}
         return {"secret": secret, "code": code, "expiresIn": 300}
 
     def get(self, secret):
         self.prune()
         return self.pending.get(digest(secret))
 
-    def claim(self, code, entry):
+    def _candidate(self, code):
+        """Apply the same lockout before policy inspection and claiming."""
         self.prune()
         self.failed_claims = [t for t in self.failed_claims if t > self.clock() - 300]
         if len(self.failed_claims) >= 5:
             raise ValueError("Too many incorrect codes; wait five minutes")
-        for key, pending in self.pending.items():
-            if secrets.compare_digest(pending["code"], code) and pending["entry"] is None:
-                pending["entry"] = entry
-                return key
+        if isinstance(code, str) and len(code) == 4 and code.isascii() and code.isdigit():
+            for key, pending in self.pending.items():
+                if secrets.compare_digest(pending["code"], code) and pending["entry"] is None:
+                    return key, pending
         self.failed_claims.append(self.clock())
         raise ValueError("Pairing code expired or already used")
+
+    def claim(self, code, entry):
+        key, pending = self._candidate(code)
+        pending["entry"] = entry
+        return key
+
+    def policy_for_code(self, code):
+        _, pending = self._candidate(code)
+        # Return a detached policy: callers cannot alter the negotiated role.
+        policy = pending.get("policy")
+        return {**policy, "capabilities": list(policy["capabilities"])} if policy else None
 
     def cancel(self, secret):
         self.pending.pop(digest(secret), None)

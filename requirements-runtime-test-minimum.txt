@@ -1,0 +1,5 @@
+# Minimum Home Assistant version declared by hacs.json.
+homeassistant==2026.9.0
+pytest-homeassistant-custom-component==0.13.363
+PyTurboJPEG==1.8.3
+av==17.0.1

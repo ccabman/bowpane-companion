@@ -1,0 +1,58 @@
+BowPane protocol v2 security review — October 20, 2026
+
+Scope: local companion branch dev/protocol-v2-health against baseline 09d07d6.
+Reviewed pairing, administrator approval, capability policy, native routes,
+revocation, input bounds, module-health isolation and legacy TV compatibility.
+No production HA, credentials, Photos library or household services were queried.
+
+Issues fixed
+
+1. Pairing attempt-counter bypass introduced by policy lookup.
+   Invalid codes returned before reaching the original claim counter. Policy
+   lookup and claim now share the same candidate/lockout check. Five incorrect
+   attempts block even a correct code for the lockout period. Non-ASCII and
+   non-string codes are safely rejected. Tests cover lookup and claim paths.
+
+2. Empty Origin header bypass.
+   The old truthiness check accepted Origin with an empty value. The native
+   boundary now rejects the presence of any Origin header and marks denial
+   responses no-store. Real HTTP tests exercise empty and non-empty Origin.
+
+3. Declared-body-only limits.
+   JSON operations now read a bounded number of actual bytes with a five-second
+   deadline, require Content-Length and reject compressed input. Malformed,
+   oversized and compressed-body tests use the real HTTP stack.
+
+4. Fail-open treatment of ambiguous stored scope.
+   Only genuinely legacy entries (no protocol, role or capabilities fields)
+   receive legacy TV privileges. Unsupported/incomplete versioned grants deny
+   access. Client capabilities and entitlement reports cannot grant operations.
+
+5. Module-failure and diagnostic containment.
+   The new internal health scaffold bounds asynchronous adapters independently,
+   catches failures without logging private errors, and allowlists output fields
+   and enum values. Fault, invalid-result, timeout and redaction tests pass.
+   Live adapters remain disconnected, so household service health is not claimed.
+
+Verified boundaries
+
+- Actual HA administrator gate rejects unauthenticated/read-only users.
+- Explicit administrator role must match the negotiated device role.
+- Mac agent cannot read cameras, TV configuration or submit TV entitlements.
+- V1 TV retains its selected entities and gains no health/write capabilities.
+- Both approvals are required; expired/cancelled/unconfirmed claims cannot gain
+  durable access. Confirmed entries survive a full process restart.
+- Removing an entry blocks subsequent API requests for that credential.
+- No upload, publishing, photo-write or arbitrary service-execution route exists.
+- Health excludes credentials, media URLs, entity names and household content.
+
+Material limits
+
+- Existing issued HA HLS links are not invalidated by BowPane entry removal;
+  they remain governed by HA's stream lifetime. This is existing behavior.
+- The unauthenticated start endpoint retains bounded global throttling/capacity;
+  an attacker can exhaust pending slots temporarily. No new privilege results.
+- The four-digit claim code remains protected by admin approval, five-minute
+  expiry, a five-failure lockout and the independent high-entropy device secret.
+- Health adapters, browser health UI and publisher permissions are future work.
+- Linux CI/full HACS execution and deployment-platform visual review remain gates.

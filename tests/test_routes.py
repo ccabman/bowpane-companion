@@ -1,5 +1,6 @@
 """Adapter unit tests with minimal HA/aiohttp doubles, not a live HA test."""
 import asyncio
+import json
 import importlib.util
 from pathlib import Path
 import sys
@@ -30,7 +31,13 @@ class Request:
     content_length = 32
     def __init__(self, secret="", body=None):
         self.headers = {"X-BowPane-Key": secret}
-        self.body = body or {}
+        self.body = {} if body is None else body
+        self.raw = json.dumps(self.body).encode()
+        self.content_length = len(self.raw)
+        self.content = self
+    async def read(self, size):
+        chunk, self.raw = self.raw[:size], self.raw[size:]
+        return chunk
     async def json(self): return self.body
 
 class RouteTests(unittest.IsolatedAsyncioTestCase):
@@ -155,5 +162,60 @@ class RouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.view.post(Request(self.secret, {"tier": "bogus", "source": "development_preview"}), "capabilities")).status, 400)
         self.entries.clear()
         self.assertEqual((await self.view.post(request, "capabilities")).status, 401)
+
+
+class ProtocolV2Tests(RouteTests):
+    async def pair_agent(self):
+        self.broker.last_start = -float('inf')
+        result = await self.view.post(Request(body={'versions': [2], 'role': 'mac_agent'}), 'v2_start')
+        self.assertEqual(result.status, 200)
+        self.secret = result.data['secret']
+        policy = self.broker.policy_for_code(result.data['code'])
+        hashed = self.broker.claim(result.data['code'], 'agent-flow')
+        self.entry = SimpleNamespace(title='Test agent', data={
+            'key_hash': hashed, 'confirmed': False, **policy})
+        self.entries['agent'] = self.entry
+        return result
+
+    async def test_agent_camera_free_scope_and_revocation(self):
+        await self.pair_agent()
+        self.assertEqual((await self.view.post(Request(self.secret), 'v2_health')).status, 401)
+        confirmed = await self.view.post(Request(self.secret), 'confirm')
+        self.assertEqual(confirmed.data['capabilities'], ['health.read'])
+        self.assertIsNone(confirmed.data['configuration'])
+        for action in ['configuration', 'stream', 'capabilities']:
+            self.assertEqual((await self.view.post(Request(self.secret), action)).status, 403)
+        result = await self.view.post(Request(self.secret), 'v2_health')
+        self.assertEqual(result.status, 200)
+        self.assertEqual(set(result.data['modules']), {'photos', 'calendars', 'music'})
+        self.assertTrue(all(m['lastSuccess'] is None for m in result.data['modules'].values()))
+        self.entries.clear()
+        self.assertEqual((await self.view.post(Request(self.secret), 'v2_health')).status, 401)
+
+    async def test_legacy_never_gains_health_or_write(self):
+        self.approve_in_ha()
+        await self.view.post(Request(self.secret), 'confirm')
+        self.assertEqual((await self.view.post(Request(self.secret), 'v2_health')).status, 403)
+        for action in ['publish', 'photo_write', 'service']:
+            self.assertEqual((await self.view.post(Request(self.secret), action)).status, 404)
+
+    async def test_invalid_negotiations_never_create_claims(self):
+        for body in [{'versions': [1], 'role': 'mac_agent'},
+                     {'versions': [True], 'role': 'mac_agent'},
+                     {'versions': [2], 'role': 'admin'},
+                     {'versions': [2], 'role': 'mac_agent', 'capabilities': ['photo.write']},
+                     {'versions': [2], 'role': []}, []]:
+            before = len(self.broker.pending)
+            result = await self.view.post(Request(body=body), 'v2_start')
+            self.assertEqual(result.status, 400)
+            self.assertEqual(len(self.broker.pending), before)
+
+    async def test_v2_tv_does_not_gain_health(self):
+        from route_fixture.protocol import negotiate, grants
+        policy = negotiate({'versions': [1, 2], 'role': 'tv_display'})
+        self.assertTrue(grants(policy, 'camera.stream'))
+        self.assertFalse(grants(policy, 'health.read'))
+        self.assertFalse(grants({**policy, 'capabilities': ['photo.write']}, 'photo.write'))
+        self.assertFalse(grants({'protocol_version': 3}, 'camera.stream'))
 
 if __name__ == "__main__": unittest.main()

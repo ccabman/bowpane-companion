@@ -1,0 +1,5 @@
+# Real HA API/config-flow tests; isolated from the standard-library test doubles.
+homeassistant==2026.10.2
+pytest-homeassistant-custom-component==0.13.373
+PyTurboJPEG==1.8.3
+av==19.0.0

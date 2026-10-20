@@ -1,0 +1,65 @@
+BowPane first milestone validation — October 20, 2026
+
+Source and isolation
+
+Companion origin: https://github.com/ccabman/bowpane-companion.git
+Baseline: main, 09d07d6c543ccaddd379fb87d8f6a6e7a57c973d.
+Development branch: dev/protocol-v2-health, isolated local worktree.
+The original Desktop companion checkout remains clean on main. Its three audited
+file hashes still match AUDIT.md. No applicable AGENTS.md was found.
+The native Desktop project has no Git metadata; its release repository remains
+unverified. Only an isolated copy was built. SHA-256 comparison verified all 25
+Swift source/test files were unchanged from the Desktop project.
+
+Passed
+
+- Python 3.13.16: 45 unittest executions.
+- Python 3.14.8: 45 unittest executions.
+  These include 11 inherited compatibility repetitions, for 34 distinct tests.
+- Home Assistant 2026.9.0 (declared minimum): 10 real-runtime tests passed.
+- Home Assistant 2026.10.2: 10 real-runtime tests passed.
+  Each default run intentionally skips the separate opt-in native lab.
+- Native lab: run separately, passed without skips or lingering timers.
+  Xcode 27.0 / tvOS 27.0 simulator: 9 unchanged Swift tests passed, including
+  actual HTTPS pairing, two approvals, configuration validation, generated HLS
+  video decoding with advancing frames, and API revocation.
+- Full process restart: two separate real HA processes using TLS and actual HA
+  configuration storage; confirmed pairing survives, unconfirmed claim cannot
+  confirm, removal revokes access. Included in both runtime version counts.
+- Real HA admin HTTP boundary, flow schemas/selectors, role mismatch/retry,
+  legacy response shapes, stream entity allowlist, device-to-device revocation
+  isolation, expiry/cancel, Origin/HTTPS checks and malformed/oversized input.
+- Module exception/timeout isolation, output allowlisting and redaction.
+- hassfest: all applicable standalone integration checks passed; 0 invalid
+  integrations, using the upstream core validator at tag 2026.10.2.
+- Official HACS manifest and hacs.json schemas passed locally using HACS source
+  revision a15e87ec0d1c82e58f1ddbaf17669d3eaa261eb8. This is not the full action.
+- Ruff on changed production modules and new runtime/health tests, syntax
+  compilation, and git whitespace validation passed.
+
+CI prepared
+
+Existing Python 3.13 unit, hassfest and HACS jobs remain. A Python 3.14 Linux
+runtime matrix now covers the minimum and current tested HA versions using
+separately pinned test requirements. No workflow was dispatched or branch pushed.
+
+Still required before household deployment
+
+- Execute Linux CI/full HACS action against the reviewed published ref.
+- Visually review actual setup forms in the HA frontend. Schemas, selectors,
+  translated labels and the administrator HTTP boundary were tested, but no
+  browser visual review was performed.
+- Identify the native release repository and installed binary; simulator success
+  verifies unchanged source compatibility, not the exact physical TV installation.
+- Review a targeted companion backup/install/rollback procedure and authorize a
+  household deployment. No deployment is authorized by these test results.
+
+Scope limits
+
+Production health adapters are still disconnected. Health returns unsupported
+with null sync timestamps. Mac packaging, health UI, photo publishing/requests,
+calendar/music adapters and Apple Music developer-key lifecycle inspection are
+future work. No photo/control permissions or provider credentials were changed.
+All video, entities and users used in tests were synthetic. Native network tests
+were limited to loopback. No SSH connection, household HA query, picture-frame
+operation, Photos access or write under Home Setup sources occurred.

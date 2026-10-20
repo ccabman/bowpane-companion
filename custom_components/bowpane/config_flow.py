@@ -1,10 +1,11 @@
-"""Pair a TV and select its read-only scope using Home Assistant's own UI."""
+"""Approve a native device role and its read-only scope in Home Assistant."""
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import selector
-from .pairing import validate_selection, validate_panel
-from .entitlements import reported_pro, preserve_pro_settings
+
+from .entitlements import preserve_pro_settings, reported_pro
+from .pairing import validate_panel, validate_selection
 from .weather import validate_weather
 
 DOMAIN = "bowpane"
@@ -51,6 +52,16 @@ class BowPaneFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return await self.async_step_install()
         errors = {}
         if user_input is not None:
+            try:
+                policy = self.hass.data[DOMAIN]["pairings"].policy_for_code(user_input["code"].replace(" ", ""))
+                if user_input.get("role", "tv_display") != (policy or {}).get("role", "tv_display"):
+                    raise ValueError("Role must match device request")
+                if policy and policy["role"] == "mac_agent":
+                    key_hash = self.hass.data[DOMAIN]["pairings"].claim(user_input["code"].replace(" ", ""), self.flow_id)
+                    return self.async_create_entry(title=user_input["name"], data={
+                        "key_hash": key_hash, "confirmed": False, **policy})
+            except ValueError:
+                return self._pairing_form({"base": "invalid_pairing"})
             cameras = [{"entity": user_input[f"camera_{i}"], "main": user_input.get(f"main_{i}", "")}
                        for i in range(1, 5) if user_input.get(f"camera_{i}")]
             sensors = user_input.get("sensors", [])
@@ -66,14 +77,21 @@ class BowPaneFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_pairing"
             else:
                 return self.async_create_entry(title=user_input["name"], data={
-                    "key_hash": key_hash, "confirmed": False, "cameras": cameras, "sensors": sensors, "weather": weather})
+                    "key_hash": key_hash, "confirmed": False, "cameras": cameras, "sensors": sensors, "weather": weather, **(policy or {})})
+        return self._pairing_form(errors)
+
+    def _pairing_form(self, errors):
         schema = {
-            vol.Required("name", default="Living room TV"): str,
+            vol.Required("name", default="BowPane device"): str,
             vol.Required("code"): str,
+            vol.Required("role", default="tv_display"): selector.SelectSelector(
+                selector.SelectSelectorConfig(options=[
+                    {"value": "tv_display", "label": "TV display — selected cameras and sensors"},
+                    {"value": "mac_agent", "label": "Mac agent — read-only module health"}])),
         }
         add_weather_fields(schema)
         for i in range(1, 5):
-            key = vol.Required(f"camera_{i}") if i == 1 else vol.Optional(f"camera_{i}")
+            key = vol.Optional(f"camera_{i}")
             schema[key] = selector.EntitySelector(selector.EntitySelectorConfig(domain="camera"))
             schema[vol.Optional(f"main_{i}")] = selector.EntitySelector(selector.EntitySelectorConfig(domain="camera"))
         schema[vol.Optional("sensors", default=[])] = selector.EntitySelector(
@@ -95,6 +113,8 @@ class BowPaneOptionsFlow(config_entries.OptionsFlow):
         entry = self.config_entry
         if entry.data.get("hub"):
             return self.async_abort(reason="select_tv")
+        if entry.data.get("role") == "mac_agent":
+            return self.async_abort(reason="agent_scope_fixed")
         pro = reported_pro(self.hass, entry)
         errors = {}
         if user_input is not None:
